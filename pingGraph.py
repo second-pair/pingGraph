@@ -9,7 +9,8 @@
 #  subprocess is preferable nowadays, according to
 #  https://docs.python.org/3/library/os.html#os.system
 #import os
-from subprocess import run
+#from subprocess import run
+from subprocess import Popen, PIPE
 
 #  Prime the system comamnd
 hostname = "1.1.1.1"
@@ -17,8 +18,8 @@ hostname = "1.1.1.1"
 grepExp = 'time=[0-9]\{1,\}\.\{0,1\}[0-9]\{1,\} ms'
 
 #  Run the command and capture the system's response
-#response = os .system ('ping -c 1 ' + hostname + ' | grep "' + grepExp + '"')
-#response = call (['ping', '-c 1 ' + hostname + ' | grep "' + grepExp + '"'])
-pingResponse = run (["ping", "-c 1", hostname], capture_output = True)
+#  Using Popen for piping between commands
+pingResponse = Popen (["ping", "-c 1", hostname], stdout = PIPE)
+regexResponse = Popen (["grep", "-o", grepExp], stdin = pingResponse .stdout, stdout = PIPE)
 
-print (response .stdout)
+print (regexResponse .stdout .read ())
