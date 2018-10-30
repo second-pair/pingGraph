@@ -53,9 +53,22 @@ pingTimes = ()
 ##  Main Programme
 
 #  Set up the graph
+fig = plt .figure ()#dpi = 150)
+fig .patch .set_facecolor ('#1E2028')
+
+ax = fig .add_subplot (111)
+ax .patch .set_facecolor ('#1E2028')
+plt .setp (ax .spines .values (), color = '#FFFFFF')
+
+plt .title ("Ping Results", color = '#46E415')
+plt .xlabel ("Pings", color = '#FD9050')
+plt .ylabel ("Time (ms)", color = '#FD9050')
+plt .tick_params (axis = 'x', colors = '#8572F8')
+plt .tick_params (axis = 'y', colors = '#8572F8')
+for yEntry in range (0, 201, 50):
+	plt .axhline (yEntry, color = '#FFFFFF', linewidth = 1)
+
 plt .ion ()
-plt .xlabel ("Pings")
-plt .ylabel ("Time (ms)")
 plt .show ()
 
 #  Consecutively perform pings and plot the results
@@ -66,7 +79,7 @@ for i in range (pingCount):
 	pingTimes = pingTimes + (float (regexPat .findall (str (pingResp .stdout)) [0]),)
 
 	#  Re-plot the graph
-	plt .plot (pingTimes, 'b', linewidth = 1)
+	plt .plot (pingTimes, '#19C4F1', linewidth = 1)
 	plt .draw ()
 	plt .pause (0.001)
 
