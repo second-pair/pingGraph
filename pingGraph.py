@@ -4,7 +4,11 @@
 #  The aim here is to plot a graph of ping results, to get an idea of overall latency
 #  I'm mainly using it to test my internet, but it could be used for any host
 
-#  TODO:  Account for Windows-ness and run a different ping command; plus how to RegEx?
+#  TODO:
+#  Plot the graph in real-time
+#  Cap graph length
+#  Consider bar, histogram and plot -styles of graph
+#  Better colours :D
 
 ##  Dependencies:
 #  matplotlib
@@ -48,16 +52,24 @@ pingTimes = ()
 
 ##  Main Programme
 
+#  Set up the graph
+plt .ion ()
+plt .xlabel ("Pings")
+plt .ylabel ("Time (ms)")
+plt .show ()
+
+#  Consecutively perform pings and plot the results
 for i in range (pingCount):
 	#  Run the command and capture the system's response
 	pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
-	pingTimes += (float (regexPat .findall (str (pingResp .stdout)) [0]),)
-	
-	sleep (pingDelay)
-	#  Print the resulting float :D
-print (pingTimes)
+	#  Extract the timing data and re-build the tuple
+	pingTimes = pingTimes + (float (regexPat .findall (str (pingResp .stdout)) [0]),)
 
-#  Now we need a way to plot some kind of graph...
-plt .plot (pingTimes)
-plt .ylabel ("Let's go!")
-plt .show ()
+	#  Re-plot the graph
+	plt .plot (pingTimes, 'b', linewidth = 1)
+	plt .draw ()
+	plt .pause (0.001)
+
+	sleep (pingDelay)
+
+input ("Press [enter] to exit...")
