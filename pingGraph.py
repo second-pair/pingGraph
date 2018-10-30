@@ -6,23 +6,32 @@
 
 #  TODO:  Account for Windows-ness and run a different ping command; plus how to RegEx?
 
+##  Imports
 from time import sleep
 #  subprocess is preferable to os nowadays, according to
 #  https://docs.python.org/3/library/os.html#os.system
 #  We're using `Popen ()` instead of `run ()` so we can pipe between `ping` and `grep`
-#  I know there's a RegEx module for Python, but this method is "vanilla" and `pip`-less
-from subprocess import Popen, PIPE
+#  Turns out there's a native RegEx package :|
+#  So reverting back to `run ()`
+import re
+from subprocess import run
+#  Using `matplotlib` for graphing functionality
 
 #  Destination for the ping comamnd
 pingDest = "1.1.1.1"
 #  grep parses RegEx a bit differently than I'm used to, but this seems to work great
-grepExp = 'time=[0-9]\{1,\}\.\{0,1\}[0-9]\{1,\} ms'
+#grepExp = 'time=[0-9]\{1,\}\.\{0,1\}[0-9]\{1,\} ms'
+#  "normal" RegEx pattern to search for the ping time and capture the timing value
+regexPat = re .compile ('time=([0-9]+\.?[0-9]*) ms')
 
 for i in range (10):
 	#  Run the command and capture the system's response
-	pingResponse = Popen (["ping", "-c 1", pingDest], stdout = PIPE)
-	regexResponse = Popen (["grep", "-o", grepExp], stdin = pingResponse .stdout, stdout = PIPE)
-	pingTime = float (regexResponse .stdout .read () [5:-4])
+	pingResp = run (["ping", "-c 1", pingDest], capture_output = True)
+	#regexResponse = Popen (["grep", "-o", grepExp], stdin = pingResponse .stdout, stdout = PIPE)
+	#pingTime = float (regexResponse .stdout .read () [5:-4])
+	pingRespStr = str (pingResp .stdout)
+	regexRes = regexPat .findall (pingRespStr)
+	pingTime = float (regexRes [0])
 	sleep (0.5)
 	
 	#  Print the resulting float :D
