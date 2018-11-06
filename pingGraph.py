@@ -4,25 +4,34 @@
 #  The aim here is to plot a graph of ping results, to get an idea of overall latency
 #  I'm mainly using it to test my internet, but it could be used for any host
 
-#  TODO:
-#  Plot the graph in real-time
+##  Config:
+#  This script reads settings from `settings.json` in the current working directory
+
+##  TODO:
+#  Add fallback settings, in case `settings.json` isn't present
 #  Cap graph length
 #  Consider bar, histogram and plot -styles of graph
-#  Better colours :D
+#  Add dark/light theme option
 
 ##  Dependencies:
 #  matplotlib
+#  pyinstaller (for make/installation only)
 
 
 
-##  Imports
+##  Native Imports
 from time import sleep
 from os import name
 #  Native RegEx package
-import re
+from re import compile
+#  Native JSON package
+#import json
+from json import load
 #  Shell interaction - subprocess is preferable to os nowadays, according to
 #  https://docs.python.org/3/library/os.html#os.system
 from subprocess import run
+
+##  Dependency Imports
 #  Using `matplotlib` for graphing functionality
 import matplotlib .pyplot as plt
 
@@ -38,35 +47,53 @@ elif name == "posix":
 else:  #  Hope for the best...  Should die properly in future
 	pingCountArg = "-c"
 
+#  Import the JSON
+with open ("settings.json", "r") as settingsFile:
+	settings = load (settingsFile)
+
 #  Ping Variables
-pingDelay = 0.5
-pingCount = 100
+pingDelay = settings ["pingSettings"]["pingDelay"]
+pingCount = settings ["pingSettings"]["pingCount"]
 #  Destination for the ping comamnd
-pingDest = "1.1.1.1"
-#  RegEx pattern to search for the ping time and capture the timing value
-regexPat = re .compile ('time=([0-9]+\.?[0-9]*) ?ms')
+pingDest = settings ["pingSettings"]["pingDest"]
 #  Array to hold all the ping times
 pingTimes = ()
 
+#  RegEx pattern to search for the ping time and capture the timing value
+regexPat = compile (settings ["regexString"])
+
+#  Graph Text
+graphTitle = settings ["graphText"]["graphTitle"]
+graphXLabel = settings ["graphText"]["graphXLabel"]
+graphYLabel = settings ["graphText"]["graphYLabel"]
+
+#  Colour Variables
+colourBackground = settings ["colourSettings"]["colourBackground"]
+colourBox = settings ["colourSettings"]["colourBox"]
+colourMajDivs = settings ["colourSettings"]["colourMajDivs"]
+colourPlotline = settings ["colourSettings"]["colourPlotline"]
+colourTitle = settings ["colourSettings"]["colourTitle"]
+colourLabels = settings ["colourSettings"]["colourLabels"]
+colourNumbering = settings ["colourSettings"]["colourNumbering"]
 
 
 ##  Main Programme
 
 #  Set up the graph
 fig = plt .figure ()#dpi = 150)
-fig .patch .set_facecolor ('#1E2028')
+fig .patch .set_facecolor (colourBackground)
 
 ax = fig .add_subplot (111)
-ax .patch .set_facecolor ('#1E2028')
-plt .setp (ax .spines .values (), color = '#FFFFFF')
+ax .patch .set_facecolor (colourBackground)
+plt .setp (ax .spines .values (), color = colourBox)
 
-plt .title ("Ping Results", color = '#46E415')
-plt .xlabel ("Pings", color = '#FD9050')
-plt .ylabel ("Time (ms)", color = '#FD9050')
-plt .tick_params (axis = 'x', colors = '#8572F8')
-plt .tick_params (axis = 'y', colors = '#8572F8')
+plt .title (graphTitle, color = colourTitle)
+plt .xlabel (graphXLabel, color = colourLabels)
+plt .ylabel (graphYLabel, color = colourLabels)
+plt .tick_params (axis = 'x', colors = colourNumbering)
+plt .tick_params (axis = 'y', colors = colourNumbering)
 for yEntry in range (0, 201, 50):
-	plt .axhline (yEntry, color = '#FFFFFF', linewidth = 1)
+	plt .axhline (yEntry, color = colourMajDivs, linewidth = 1)
 
 plt .ion ()
 plt .show ()
@@ -79,7 +106,7 @@ for i in range (pingCount):
 	pingTimes = pingTimes + (float (regexPat .findall (str (pingResp .stdout)) [0]),)
 
 	#  Re-plot the graph
-	plt .plot (pingTimes, '#19C4F1', linewidth = 1)
+	plt .plot (pingTimes, colourPlotline, linewidth = 1)
 	plt .draw ()
 	plt .pause (0.001)
 

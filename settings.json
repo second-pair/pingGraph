@@ -1,0 +1,29 @@
+{
+	"pingSettings":
+	{
+		"pingDelay":  1,
+		"pingCount":  1000,
+		"pingBuffer":  100,
+		"pingDest":  "1.1.1.1"
+	},
+
+	"regexString": "time=([0-9]+\\.?[0-9]*) ?ms",
+
+	"graphText":
+	{
+		"graphTitle":  "Ping Results",
+		"graphXLabel":  "Pings",
+		"graphYLabel":  "Time (ms)"
+	},
+
+	"colourSettings":
+	{
+		"colourBackground": "#1E2028",
+		"colourBox": "#FFFFFF",
+		"colourMajDivs": "#FFFFFF",
+		"colourPlotline": "#19C4F1",
+		"colourTitle": "#46E415",
+		"colourLabels": "#FD9050",
+		"colourNumbering": "#8572F8"
+	}
+}
