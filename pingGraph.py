@@ -24,7 +24,6 @@ from os import name
 #  Native RegEx package
 from re import compile
 #  Native JSON package
-#import json
 from json import load
 #  Shell interaction - subprocess is preferable to os nowadays, according to
 #  https://docs.python.org/3/library/os.html#os.system
@@ -90,12 +89,9 @@ def runThePings ():
 
 		#  Extract the timing data and re-build the tuple
 		#  Still need to loop results once pingBuffer met
-		#pop pingTimes [0], shift results down, append new result
-		#pingTimes = pingTimes + (float (regexResp [0]),)
 		pingTimes = addPingDatum (pingTimes, regexResp)
 
 		#  Re-plot the graph
-		#plt .gcf () .clear ()
 		plt .plot (pingTimes, colourPlotline, linewidth = 1)
 		updateTheGraph ()
 
