@@ -9,7 +9,6 @@
 
 ##  TODO:
 #  Add fallback settings, in case `settings.json` isn't present
-#  Cap graph length
 #  Consider bar, histogram and plot -styles of graph
 #  Add dark/light theme option
 
@@ -54,6 +53,7 @@ with open ("settings.json", "r") as settingsFile:
 #  Ping Variables
 pingDelay = settings ["pingSettings"]["pingDelay"]
 pingCount = settings ["pingSettings"]["pingCount"]
+pingBuffer = settings ["pingSettings"]["pingBuffer"]
 #  Destination for the ping comamnd
 pingDest = settings ["pingSettings"]["pingDest"]
 #  Array to hold all the ping times
@@ -77,39 +77,83 @@ colourLabels = settings ["colourSettings"]["colourLabels"]
 colourNumbering = settings ["colourSettings"]["colourNumbering"]
 
 
+
+##  Ping-Logging Function
+def runThePings ():
+	global pingTimes
+
+	#  Consecutively perform pings and plot the results
+	for i in range (pingCount):
+		#  Run the command and capture the system's response
+		pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
+		regexResp = regexPat .findall (str (pingResp .stdout))
+
+		#  Extract the timing data and re-build the tuple
+		#  Still need to loop results once pingBuffer met
+		#pop pingTimes [0], shift results down, append new result
+		#pingTimes = pingTimes + (float (regexResp [0]),)
+		pingTimes = addPingDatum (pingTimes, regexResp)
+
+		#  Re-plot the graph
+		#plt .gcf () .clear ()
+		plt .plot (pingTimes, colourPlotline, linewidth = 1)
+		updateTheGraph ()
+
+		sleep (pingDelay)
+	return
+
+
+
+##  Function to add latest ping datum to graphing data
+def addPingDatum (theData, theNewDatum):
+	#  Check if we got a proper ping response
+	if theNewDatum == []:
+		theNewDatum = [0]
+	#  Add the new datum and return
+	if len (theData) >= pingBuffer:
+		return theData [len (theData) - pingBuffer + 1 :] + (float (theNewDatum [0]),)
+	else:
+		return theData + (float (theNewDatum [0]),)
+
+
+
+##  Single function to update all the graph data
+def updateTheGraph ():
+	#  Draw and refresh the graph
+	fig .canvas .draw ()
+	fig .canvas .flush_events ()
+	ax .clear ()
+
+	#  Re-define all those colours
+	ax .patch .set_facecolor (colourBackground)
+	plt .title (graphTitle, color = colourTitle)
+	plt .xlabel (graphXLabel, color = colourLabels)
+	plt .ylabel (graphYLabel, color = colourLabels)
+	for yEntry in range (0, 201, 50):
+		plt .axhline (yEntry, color = colourMajDivs, linewidth = 1)
+
+	#  Is it possible to conditionally highlight null-responses?
+
+
+
 ##  Main Programme
 
-#  Set up the graph
+#  Set up the graph's properties
 fig = plt .figure ()#dpi = 150)
 fig .patch .set_facecolor (colourBackground)
-
 ax = fig .add_subplot (111)
-ax .patch .set_facecolor (colourBackground)
-plt .setp (ax .spines .values (), color = colourBox)
 
-plt .title (graphTitle, color = colourTitle)
-plt .xlabel (graphXLabel, color = colourLabels)
-plt .ylabel (graphYLabel, color = colourLabels)
+#  Colours and stuff
+plt .setp (ax .spines .values (), color = colourBox)
 plt .tick_params (axis = 'x', colors = colourNumbering)
 plt .tick_params (axis = 'y', colors = colourNumbering)
-for yEntry in range (0, 201, 50):
-	plt .axhline (yEntry, color = colourMajDivs, linewidth = 1)
+updateTheGraph ()
 
+#  Bring the graph up for the first time
 plt .ion ()
 plt .show ()
 
-#  Consecutively perform pings and plot the results
-for i in range (pingCount):
-	#  Run the command and capture the system's response
-	pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
-	#  Extract the timing data and re-build the tuple
-	pingTimes = pingTimes + (float (regexPat .findall (str (pingResp .stdout)) [0]),)
-
-	#  Re-plot the graph
-	plt .plot (pingTimes, colourPlotline, linewidth = 1)
-	plt .draw ()
-	plt .pause (0.001)
-
-	sleep (pingDelay)
+#  Run the ping-logging function
+runThePings ()
 
 input ("Press [enter] to exit...")
