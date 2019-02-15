@@ -1,10 +1,11 @@
 {
 	"pingSettings":
 	{
-		"pingDelay":  1,
+		"pingDelay":  10,
 		"pingCount":  0,
 		"pingBuffer":  1000,
-		"pingDest":  "1.1.1.1"
+		"pingDest":  "1.1.1.1",
+		"pingUpperBound":  200
 	},
 
 	"regexString": "time=([0-9]+\\.?[0-9]*) ?ms",

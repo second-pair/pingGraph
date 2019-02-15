@@ -52,6 +52,8 @@ pingCount = settings ["pingSettings"]["pingCount"]
 pingBuffer = settings ["pingSettings"]["pingBuffer"]
 #  Destination for the ping comamnd
 pingDest = settings ["pingSettings"]["pingDest"]
+#  Upper bound for an "acceptable" ping time
+pingUpperBound = settings ["pingSettings"]["pingUpperBound"]
 #  Array to hold all the ping times
 pingTimes = ()
 
@@ -75,43 +77,42 @@ colourNumbering = settings ["colourSettings"]["colourNumbering"]
 
 
 ##  Ping-Logging Function
-def runThePings ():
-	global pingTimes
-
+def runThePingsPre ():
 	#  Consecutively perform pings and plot the results
 	if pingCount > 0:
 		for _ in range (pingCount):
-			#  Run the command and capture the system's response
-			pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
-			regexResp = regexPat .findall (str (pingResp .stdout))
-
-			#  Extract the timing data and re-build the tuple
-			pingTimes = addPingDatum (pingTimes, regexResp)
-
-			#  Re-plot the graph
-			plt .plot (pingTimes, colourPlotline, linewidth = 1)
-			updateTheGraph ()
-
+			runThePings ()
 			sleep (pingDelay)
-
 	elif pingCount == 0:
 		while True:
-			#  Run the command and capture the system's response
-			pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
-			regexResp = regexPat .findall (str (pingResp .stdout))
-
-			#  Extract the timing data and re-build the tuple
-			pingTimes = addPingDatum (pingTimes, regexResp)
-
-			#  Re-plot the graph
-			plt .plot (pingTimes, colourPlotline, linewidth = 1)
-			updateTheGraph ()
-
+			runThePings()
 			sleep (pingDelay)
-
 	else:
 		print ("Error pingCount = %d." % pingCount)
 		exit (1)
+	return
+
+def runThePings ():
+	global pingTimes
+
+	#  Run the command and capture the system's response
+	pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
+	regexResp = regexPat .findall (str (pingResp .stdout))
+
+	#  Extract the timing data
+	if regexResp == []:
+		thePingDatum = 0.0
+	else:
+		thePingDatum = float (regexResp [0])
+	if thePingDatum == 0 or thePingDatum > pingUpperBound:
+		print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+
+	#  Re-build the timing tuple
+	pingTimes = addPingDatum (pingTimes, thePingDatum)
+
+	#  Re-plot the graph
+	plt .plot (pingTimes, colourPlotline, linewidth = 1)
+	updateTheGraph ()
 	return
 
 
@@ -119,14 +120,12 @@ def runThePings ():
 ##  Function to add latest ping datum to graphing data
 def addPingDatum (theData, theNewDatum):
 	#  Check if we got a proper ping response
-	if theNewDatum == []:
-		theNewDatum = [0]
-		print ("[%s] Invalid ping response (probably ping failed)." % datetime .now ())
+	#someCheckHere
 	#  Add the new datum and return
 	if len (theData) >= pingBuffer:
-		return theData [len (theData) - pingBuffer + 1 :] + (float (theNewDatum [0]),)
+		return theData [len (theData) - pingBuffer + 1 :] + (theNewDatum,)
 	else:
-		return theData + (float (theNewDatum [0]),)
+		return theData + (theNewDatum,)
 
 
 
@@ -172,6 +171,6 @@ plt .ion ()
 plt .show ()
 
 #  Run the ping-logging function
-runThePings ()
+runThePingsPre ()
 
 input ("Press [enter] to exit...")
