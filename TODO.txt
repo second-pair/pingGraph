@@ -1,0 +1,11 @@
+Add timestamps to graph
+Make window more responsive
+Dynamically scale subdivisions
+Highlight dead pings (and bad pings?) - console-logging now in place.
+Account for processing times in delay (also fixing this would probably help responsiveness)
+Cap graph height - add label to out-of-range?
+Pre-resolve URL so we aren't waiting for DNS every ping
+
+#  Add fallback settings, in case `settings.json` isn't present
+#  Consider bar, histogram and plot -styles of graph
+#  Add dark/light theme option

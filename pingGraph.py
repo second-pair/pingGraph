@@ -3,14 +3,10 @@
 #  Author:  Blair Edwards 2018
 #  The aim here is to plot a graph of ping results, to get an idea of overall latency
 #  I'm mainly using it to test my internet, but it could be used for any host
+#  To run ad infinitum, change 'pingCount' in 'settings.json" to 0
 
 ##  Config:
 #  This script reads settings from `settings.json` in the current working directory
-
-##  TODO:
-#  Add fallback settings, in case `settings.json` isn't present
-#  Consider bar, histogram and plot -styles of graph
-#  Add dark/light theme option
 
 ##  Dependencies:
 #  matplotlib
@@ -20,6 +16,7 @@
 
 ##  Native Imports
 from time import sleep
+from datetime import datetime
 from os import name
 #  Native RegEx package
 from re import compile
@@ -32,7 +29,7 @@ from subprocess import run
 ##  Dependency Imports
 #  Using `matplotlib` for graphing functionality
 import matplotlib .pyplot as plt
-
+import tkinter
 
 
 ##  Variables
@@ -82,20 +79,39 @@ def runThePings ():
 	global pingTimes
 
 	#  Consecutively perform pings and plot the results
-	for i in range (pingCount):
-		#  Run the command and capture the system's response
-		pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
-		regexResp = regexPat .findall (str (pingResp .stdout))
+	if pingCount > 0:
+		for _ in range (pingCount):
+			#  Run the command and capture the system's response
+			pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
+			regexResp = regexPat .findall (str (pingResp .stdout))
 
-		#  Extract the timing data and re-build the tuple
-		#  Still need to loop results once pingBuffer met
-		pingTimes = addPingDatum (pingTimes, regexResp)
+			#  Extract the timing data and re-build the tuple
+			pingTimes = addPingDatum (pingTimes, regexResp)
 
-		#  Re-plot the graph
-		plt .plot (pingTimes, colourPlotline, linewidth = 1)
-		updateTheGraph ()
+			#  Re-plot the graph
+			plt .plot (pingTimes, colourPlotline, linewidth = 1)
+			updateTheGraph ()
 
-		sleep (pingDelay)
+			sleep (pingDelay)
+
+	elif pingCount == 0:
+		while True:
+			#  Run the command and capture the system's response
+			pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
+			regexResp = regexPat .findall (str (pingResp .stdout))
+
+			#  Extract the timing data and re-build the tuple
+			pingTimes = addPingDatum (pingTimes, regexResp)
+
+			#  Re-plot the graph
+			plt .plot (pingTimes, colourPlotline, linewidth = 1)
+			updateTheGraph ()
+
+			sleep (pingDelay)
+
+	else:
+		print ("Error pingCount = %d." % pingCount)
+		exit (1)
 	return
 
 
@@ -105,6 +121,7 @@ def addPingDatum (theData, theNewDatum):
 	#  Check if we got a proper ping response
 	if theNewDatum == []:
 		theNewDatum = [0]
+		print ("[%s] Invalid ping response (probably ping failed)." % datetime .now ())
 	#  Add the new datum and return
 	if len (theData) >= pingBuffer:
 		return theData [len (theData) - pingBuffer + 1 :] + (float (theNewDatum [0]),)
@@ -134,8 +151,13 @@ def updateTheGraph ():
 
 ##  Main Programme
 
+#  Determine DPI scaling
+root = tkinter .Tk ()
+vertRes = root .winfo_screenheight ()
+root .destroy ()
+
 #  Set up the graph's properties
-fig = plt .figure ()#dpi = 150)
+fig = plt .figure (dpi = vertRes // 1080 * 100)
 fig .patch .set_facecolor (colourBackground)
 ax = fig .add_subplot (111)
 

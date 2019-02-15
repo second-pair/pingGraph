@@ -1,9 +1,9 @@
 {
 	"pingSettings":
 	{
-		"pingDelay":  10,
-		"pingCount":  10000,
-		"pingBuffer":  100,
+		"pingDelay":  1,
+		"pingCount":  0,
+		"pingBuffer":  1000,
 		"pingDest":  "1.1.1.1"
 	},
 
