@@ -12,6 +12,14 @@
 #  matplotlib
 #  pyinstaller (for make/installation only)
 
+##  TODO:
+#  Add more error-checking!
+#  Make sure we can't inject stuff from 'setting.json'
+#  Think about adding a headless mode so 'matplotlib' isn't required
+#  The thinking is about whether this no longer makes it about graphing, whether
+#  that matters or not, etc.
+#  Include bad pings logging inside the Tkinter window
+#  Look into why the window isn't responsive between pings (maybe background the wait process or something?)
 
 
 ##  Native Imports
@@ -53,7 +61,7 @@ pingBuffer = settings ["pingSettings"]["pingBuffer"]
 #  Destination for the ping comamnd
 pingDest = settings ["pingSettings"]["pingDest"]
 #  Upper bound for an "acceptable" ping time
-pingUpperBound = settings ["pingSettings"]["pingUpperBound"]
+pingUpperBound = float (settings ["pingSettings"]["pingUpperBound"])
 #  Array to hold all the ping times
 pingTimes = ()
 
@@ -76,6 +84,17 @@ colourNumbering = settings ["colourSettings"]["colourNumbering"]
 
 
 
+##  Logging
+def log (theMessage):
+	print ("[%s]:  %s" % (datetime .now (), theMessage))
+	#Feed to Tkinter ()
+
+def error (theMessage):
+	print ("[%s]:  %s" % (datetime .now (), theMessage))
+	exit (1)
+
+
+
 ##  Ping-Logging Function
 def runThePingsPre ():
 	#  Consecutively perform pings and plot the results
@@ -88,7 +107,7 @@ def runThePingsPre ():
 			runThePings()
 			sleep (pingDelay)
 	else:
-		print ("Error pingCount = %d." % pingCount)
+		error ("Error pingCount = %d (bad value)." % pingCount)
 		exit (1)
 	return
 
@@ -99,13 +118,18 @@ def runThePings ():
 	pingResp = run (["ping", pingCountArg, "1", pingDest], capture_output = True)
 	regexResp = regexPat .findall (str (pingResp .stdout))
 
-	#  Extract the timing data
+	#  Extract the timing data and look for "bad" results
 	if regexResp == []:
 		thePingDatum = 0.0
 	else:
 		thePingDatum = float (regexResp [0])
-	if thePingDatum == 0 or thePingDatum > pingUpperBound:
-		print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+		if thePingDatum > pingUpperBound:
+			log ("Extreme ping value:  %dms" % thePingDatum)
+#			print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+			thePingDatum = pingUpperBound
+	if thePingDatum == 0:
+		log ("Extreme ping value:  %dms" % thePingDatum)
+#		print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
 
 	#  Re-build the timing tuple
 	pingTimes = addPingDatum (pingTimes, thePingDatum)
@@ -132,13 +156,15 @@ def addPingDatum (theData, theNewDatum):
 ##  Single function to update all the graph data
 def updateTheGraph ():
 	#  Draw and refresh the graph
+	### These 2 lines cause the 'can't invoke "event" command: application has been destroyed while executing'
 	fig .canvas .draw ()
 	fig .canvas .flush_events ()
+	###
 	ax .clear ()
 
 	#  Re-define all those colours
 	ax .patch .set_facecolor (colourBackground)
-	plt .title (graphTitle, color = colourTitle)
+	plt .title ("%s - %s" % (graphTitle, pingDest), color = colourTitle)
 	plt .xlabel (graphXLabel, color = colourLabels)
 	plt .ylabel (graphYLabel, color = colourLabels)
 	for yEntry in range (0, 201, 50):

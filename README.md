@@ -24,5 +24,5 @@ I've set up a build system for native distribution.
 If you've got `make` installed, just run `make`.  `make clean` will clean the build.  Otherwise:  
 Simply running `pyinstaller pingGraph.py` will do the business for your machine, though adding `--onefile` is necessary to end up with a single, distributable binary.
 Additionally, you'll need to copy `settings.json` to the same directory as the binary.
-The commands I've got in the `makefile` (and that plays nicely with `.gitignore` is:  
+The commands I've used in the `makefile` (and that plays nicely with the `.gitignore` is:  
 `pyinstaller --onefile --specpath build --distpath bin pingGraph.py`
