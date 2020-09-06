@@ -15,9 +15,9 @@
 ##  TODO:
 #  Add more error-checking!
 #  Make sure we can't inject stuff from 'setting.json'
-#  Think about adding a headless mode so 'matplotlib' isn't required
-#  The thinking is about whether this no longer makes it about graphing, whether
-#  that matters or not, etc.
+#  Think about adding a headless mode so 'matplotlib' isn't required.
+#  For example, rendering a graph image every few minutes, or providing a
+#  web interface, would make this worthwhile.
 #  Include bad pings logging inside the Tkinter window
 #  Look into why the window isn't responsive between pings (maybe background the wait process or something?)
 
@@ -36,7 +36,9 @@ from subprocess import run
 
 ##  Dependency Imports
 #  Using `matplotlib` for graphing functionality
-import matplotlib .pyplot as plt
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import tkinter
 
 
@@ -85,9 +87,16 @@ colourNumbering = settings ["colourSettings"]["colourNumbering"]
 
 
 ##  Logging
+logString = "-=-  Log  -=-"
 def log (theMessage):
-	print ("[%s]:  %s" % (datetime .now (), theMessage))
-	#Feed to Tkinter ()
+	global logString
+	logMessage = "[%s]:  %s" % (datetime .now (), theMessage)
+	print (logMessage)
+	#  Feed to graph text box
+	#  This currently disappears on 2 entries
+	logString = "%s\n%s" % (logString, logMessage)
+	logTextBox .set_text (logString)
+	#  Need to cut up to n lines
 
 def error (theMessage):
 	print ("[%s]:  %s" % (datetime .now (), theMessage))
@@ -125,11 +134,12 @@ def runThePings ():
 		thePingDatum = float (regexResp [0])
 		if thePingDatum > pingUpperBound:
 			log ("Extreme ping value:  %dms" % thePingDatum)
-#			print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+			#print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
 			thePingDatum = pingUpperBound
 	if thePingDatum == 0:
 		log ("Extreme ping value:  %dms" % thePingDatum)
-#		print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+		#print ("[%s]: Extreme ping value:  %dms" % (datetime .now (), thePingDatum))
+#	log ("Testing logging:  %dms" % thePingDatum)
 
 	#  Re-build the timing tuple
 	pingTimes = addPingDatum (pingTimes, thePingDatum)
@@ -156,10 +166,8 @@ def addPingDatum (theData, theNewDatum):
 ##  Single function to update all the graph data
 def updateTheGraph ():
 	#  Draw and refresh the graph
-	### These 2 lines cause the 'can't invoke "event" command: application has been destroyed while executing'
 	fig .canvas .draw ()
 	fig .canvas .flush_events ()
-	###
 	ax .clear ()
 
 	#  Re-define all those colours
@@ -179,12 +187,13 @@ def updateTheGraph ():
 #  Determine DPI scaling
 root = tkinter .Tk ()
 vertRes = root .winfo_screenheight ()
-root .destroy ()
+root .withdraw ()
 
 #  Set up the graph's properties
-fig = plt .figure (dpi = vertRes // 1080 * 100)
+fig = plt .figure (dpi = vertRes // 1080 * 100, constrained_layout = False)
 fig .patch .set_facecolor (colourBackground)
-ax = fig .add_subplot (111)
+gs = fig .add_gridspec (nrows = 1, ncols = 2, left = 0.11, right = 0.8)
+ax = fig .add_subplot (gs [:, :])
 
 #  Colours and stuff
 plt .setp (ax .spines .values (), color = colourBox)
@@ -195,6 +204,10 @@ updateTheGraph ()
 #  Bring the graph up for the first time
 plt .ion ()
 plt .show ()
+
+#  Set up the logging textbox
+#  Properties can be found in matplotlib .patches .Patch
+logTextBox = ax .text (1.02, 1, "", transform = ax .transAxes, fontsize = 8, color = "white", verticalalignment = 'top')
 
 #  Run the ping-logging function
 runThePingsPre ()

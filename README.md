@@ -9,8 +9,8 @@ There's a `settings.json` file that stores the runtime configuration.
 
 ##  Running
 This script will happily run through the Python 3 interpreter, given all the dependencies are met.
-The easiest way to install these is using [`pip`](https://pypi.org/project/pip/).
-For example, running `pip install matplotlib` will install the `matplotlib` module.
+The best way to install these is with your package manager, though the easiest way to install these is using [`pip`](https://pypi.org/project/pip/).
+For example, running either `pacman -S python-matplotlib` or `pip install --user matplotlib` will install the `matplotlib` module.
 
 ##  Making/Distributing
 I've set up a build system for native distribution.  
