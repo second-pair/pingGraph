@@ -10,6 +10,7 @@
 
 ##  Dependencies:
 #  matplotlib
+#  tkinter
 #  pyinstaller (for make/installation only)
 
 ##  TODO:

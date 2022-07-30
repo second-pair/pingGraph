@@ -6,6 +6,9 @@ There's a `settings.json` file that stores the runtime configuration.
 ##  Dependencies
 -  [Python 3](https://www.python.org/)
 -  matplotlib _(available through pip)_
+###  On Arch:
+pacman -S --needed python
+pacman -S --needed --asdeps python-matplotlib tk
 
 ##  Running
 This script will happily run through the Python 3 interpreter, given all the dependencies are met.
