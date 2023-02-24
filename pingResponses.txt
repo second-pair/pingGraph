@@ -1,5 +1,0 @@
-Reply from 192.168.1.2: Destination host unreachable.
-Reply from 1.1.1.1: bytes=32 time=35ms TTL=60
-64 bytes from 1.1.1.1: icmp_seq=1 ttl=60 time=16.7 ms
-ping: 1.1.1.1.1: Name or service not known
-Ping request could not find host 1.1.1.1.1. Please check the name and try again.

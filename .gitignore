@@ -1,6 +1,5 @@
 .*.swp
-
-#  pyinstaller Files
-build
-bin
-__pycache__
+.vscode
+target
+orig
+data
