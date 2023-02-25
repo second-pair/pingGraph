@@ -99,24 +99,42 @@ fn main ()
 {
 	//  Read & parse the settings JSON from disk.
 	let settingsJson = settingsRead (PATH_PREFS);
-	print! ("{:#}\n", settingsJson);
+	let pingDelay = settingsJson ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap ();
+	let pingCount = settingsJson ["pingSettings"] ["pingCount"] .as_u64 () .unwrap ();
+	let pingDest = settingsJson ["pingSettings"] ["pingDest"] .as_str () .unwrap ();
+
 	//  Create & open the output file.
 	let mut logFile = logOpen ();
 	//  Write the header regarding this test.
 	writeHeader (&mut logFile);
 
 	//  Core Loop
-	let sleep_dur = std ::time ::Duration ::from_millis (250);
 	//#  Capture ctrl+c.
-	//loop
-	for _ in 0 .. 10
+	//  Determine whether to run indefinitely, or how many pings to do if not.
+	if (pingCount == 0)
 	{
-		writeResult (&mut logFile);
-		std ::thread ::sleep (sleep_dur);
+		loop
+		{
+			handlePing (&mut logFile, pingDest, std ::time ::Duration ::from_millis (pingDelay));
+		}
+	}
+	else
+	{
+		for _ in 0 .. pingCount
+		{
+			handlePing (&mut logFile, pingDest, std ::time ::Duration ::from_millis (pingDelay));
+		}
 	}
 
 	//  Wrap everything up.
 	//  No need to close the file - this will happen automatically once the handle goes out-of-scope.
+}
+
+///  Handle a ping.
+fn handlePing (logFile: &mut File, pingDest: &str, sleepDur: std ::time ::Duration)
+{
+	writeResult (logFile, pingDest);
+	std ::thread ::sleep (sleepDur);
 }
 
 
@@ -181,10 +199,11 @@ fn writeHeader (logFile: &mut File)
 }
 
 ///  Write a ping result to the given file.
-fn writeResult (logFile: &mut File)
+fn writeResult (logFile: &mut File, pingDest: &str)
 {
-	let logLine = format! ("<pings>\n");
-	std ::io ::stdout () .write(logLine .as_bytes ()) .unwrap ();
+	let dateString = chrono ::Local ::now () .format ("%Y-%m-%d_%H-%M-%S");
+	let logLine = format! ("[{}]:  {} - {}ms\n", dateString, pingDest, 489);
+	std ::io ::stdout () .write (logLine .as_bytes ()) .unwrap ();
 	logFile .write_all (logLine .as_bytes ()) .unwrap ();
 }
 
