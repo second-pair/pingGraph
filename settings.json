@@ -2,11 +2,11 @@
 	"pingSettings":
 	{
 		"pingDelay":  1000,
-		"pingCount":  5,
+		"pingCount":  60,
 		"pingDest":  "10.0.0.1",
 		"pingTimeout":  100,
 		"pingBuffer":  1000,
-		"pingUpperBound":  200
+		"pingUpperBound":  1
 	},
 
 	"graphText":
@@ -18,12 +18,15 @@
 
 	"colourSettings":
 	{
-		"colourBackground": "1E202800",
-		"colourBox": "FFFFFF00",
-		"colourMajDivs": "FFFFFF00",
-		"colourPlotline": "19C4F100",
-		"colourTitle": "46E41500",
-		"colourLabels": "FD905000",
-		"colourNumbering": "8572F800"
+		"colourFail":  "FB092CFF",
+		"colourUpper":  "FD9050FF",
+		"colourPass":  "FFFFFFFF",
+		"colourBackground": "1E2028FF",
+		"colourBox": "FFFFFFFF",
+		"colourMajDivs": "FFFFFFFF",
+		"colourPlotline": "19C4F1FF",
+		"colourTitle": "46E415FF",
+		"colourLabels": "FD9050FF",
+		"colourNumbering": "8572F8FF"
 	}
 }
