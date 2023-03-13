@@ -54,7 +54,8 @@ use std ::io ::prelude;
 use std ::io ::Read;
 use std ::io ::Write;
 use std ::path ::Path;
-use std::str::FromStr;
+use std ::str ::FromStr;
+use std ::borrow ::Cow;
 //  From Crates.io
 use json;
 use chrono;
@@ -73,18 +74,18 @@ const PATH_DATA_EXT: &str = ".csv";
 //  Local Variables
 
 //  Structures
-struct Settings <'a>
+struct Settings
 {
 	pingDelay:  u64,		//  10000,
 	pingCount:  u64,		//  5,
-	pingDest:  &'a str,			//  1.1.1.1",
+	pingDest:  String,		//  1.1.1.1",
 	pingTimeout:  u64,		//  1000,
 	pingBuffer:  u64,		//  1000,
 	pingUpperBound:  u64,	//  200,
-	regexString:  &'a str,		//  time=([0-9]+\\.?[0-9]*) ?ms",
-	graphTitle:  &'a str,		//  Ping Results",
-	graphXLabel:  &'a str,		//  Pings",
-	graphYLabel:  &'a str,		//  Time (ms)",
+	regexString:  String,	//  time=([0-9]+\\.?[0-9]*) ?ms",
+	graphTitle:  String,	//  Ping Results",
+	graphXLabel:  String,	//  Pings",
+	graphYLabel:  String,	//  Time (ms)",
 	colourBackground:  u32,	//  "#1E2028",
 	colourBox:  u32,		//  "#FFFFFF",
 	colourMajDivs:  u32,	//  "#FFFFFF",
@@ -132,8 +133,6 @@ fn main ()
 
 	//  Read & parse the settings JSON from disk.
 	let settings = settingsRead (PATH_PREFS);
-	print! ("{}\n", settings .pingDelay + settings .pingCount);
-	std ::process ::exit (0);
 
 	/*let pingDest = match settingsJson ["pingSettings"] ["pingDest"] .as_str ()
 	{
@@ -146,25 +145,23 @@ fn main ()
 	//  Write the header regarding this test.
 	writeHeader (&mut logFile);
 
-	/*
 	//  Core Loop
 	//#  Capture ctrl+c.
 	//  Determine whether to run indefinitely, or how many pings to do if not.
-	if (pingCount == 0)
+	if (settings .pingCount == 0)
 	{
 		loop
 		{
-			handlePing (&mut logFile, pingDest, std ::time ::Duration ::from_millis (pingDelay));
+			handlePing (&mut logFile, &settings .pingDest, std ::time ::Duration ::from_millis (settings .pingDelay));
 		}
 	}
 	else
 	{
-		for _ in 0 .. pingCount
+		for _ in 0 .. settings .pingCount
 		{
-			handlePing (&mut logFile, pingDest, std ::time ::Duration ::from_millis (pingDelay));
+			handlePing (&mut logFile, &settings .pingDest, std ::time ::Duration ::from_millis (settings .pingDelay));
 		}
 	}
-	*/
 
 	//  Wrap everything up.
 	//  No need to close the file - this will happen automatically once the handle goes out-of-scope.
@@ -202,32 +199,27 @@ fn settingsRead (pathToOpen: &str) -> Settings
 
 	//  Parse & return the JSON.
 	let parsed = json ::parse (&settingsStr) .unwrap ();
+	let testStr = parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap () .to_owned ();
 	let settings = Settings
 	{
-		pingDelay:  0,
-		pingCount:  0,
-		pingDest:  "0",
-		pingTimeout:  0,
-		pingBuffer:  0,
-		pingUpperBound:  0,
-		regexString:  "0",
-		graphTitle:  "0",
-		graphXLabel:  "0",
-		graphYLabel:  "0",
-		colourBackground:  0,
-		colourBox:  0,
-		colourMajDivs:  0,
-		colourPlotline:  0,
-		colourTitle:  0,
-		colourLabels:  0,
-		colourNumbering:  0,
+		pingDelay:  parsed ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap (),
+		pingCount:  parsed ["pingSettings"] ["pingCount"] .as_u64 () .unwrap (),
+		pingDest:  parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap () .to_owned (),
+		pingTimeout:  parsed ["pingSettings"] ["pingTimeout"] .as_u64 () .unwrap (),
+		pingBuffer:  parsed ["pingSettings"] ["pingBuffer"] .as_u64 () .unwrap (),
+		pingUpperBound:  parsed ["pingSettings"] ["pingUpperBound"] .as_u64 () .unwrap (),
+		regexString:  parsed ["regexString"] .as_str () .unwrap () .to_owned (),
+		graphTitle:  parsed ["graphText"] ["graphTitle"] .as_str () .unwrap () .to_owned (),
+		graphXLabel:  parsed ["graphText"] ["graphXLabel"] .as_str () .unwrap () .to_owned (),
+		graphYLabel:  parsed ["graphText"] ["graphYLabel"] .as_str () .unwrap () .to_owned (),
+		colourBackground:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourBackground"] .as_str () .unwrap (), 16) .unwrap (),
+		colourBox:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourBox"] .as_str () .unwrap (), 16) .unwrap (),
+		colourMajDivs:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourMajDivs"] .as_str () .unwrap (), 16) .unwrap (),
+		colourPlotline:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourPlotline"] .as_str () .unwrap (), 16) .unwrap (),
+		colourTitle:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourTitle"] .as_str () .unwrap (), 16) .unwrap (),
+		colourLabels:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourLabels"] .as_str () .unwrap (), 16) .unwrap (),
+		colourNumbering:  u32 ::from_str_radix (parsed ["colourSettings"] ["colourNumbering"] .as_str () .unwrap (), 16) .unwrap (),
 	};
-	/*{
-		parsed ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap ();
-		parsed ["pingSettings"] ["pingCount"] .as_u64 () .unwrap ();
-		parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap ();
-		parsed ["pingSettings"] ["pingTimeout"] .as_u64 () .unwrap ();
-	};*/
 	return settings;
 }
 

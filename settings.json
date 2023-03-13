@@ -20,12 +20,12 @@
 
 	"colourSettings":
 	{
-		"colourBackground": "#1E2028",
-		"colourBox": "#FFFFFF",
-		"colourMajDivs": "#FFFFFF",
-		"colourPlotline": "#19C4F1",
-		"colourTitle": "#46E415",
-		"colourLabels": "#FD9050",
-		"colourNumbering": "#8572F8"
+		"colourBackground": "1E202800",
+		"colourBox": "FFFFFF00",
+		"colourMajDivs": "FFFFFF00",
+		"colourPlotline": "19C4F100",
+		"colourTitle": "46E41500",
+		"colourLabels": "FD905000",
+		"colourNumbering": "8572F800"
 	}
 }
