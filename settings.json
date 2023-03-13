@@ -1,12 +1,12 @@
 {
 	"pingSettings":
 	{
-		"pingDelay":  1000,
-		"pingCount":  60,
-		"pingDest":  "10.0.0.1",
+		"pingDelay":  10000,
+		"pingCount":  0,
+		"pingDest":  "1.1.1.1",
 		"pingTimeout":  100,
 		"pingBuffer":  1000,
-		"pingUpperBound":  1
+		"pingUpperBound":  60
 	},
 
 	"graphText":

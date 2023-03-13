@@ -137,7 +137,7 @@ fn main ()
 	writeHeader (&mut logFile, &settings);
 
 	//  Core Loop
-	//#  Capture ctrl+c.
+	//#  Capture ctrl+c.  Store a success rate & pressent it.
 	//  Determine whether to run indefinitely, or how many pings to do if not.
 	if (settings .pingCount == 0)
 	{
