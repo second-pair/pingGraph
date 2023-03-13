@@ -4,6 +4,7 @@
 		"pingDelay":  10000,
 		"pingCount":  5,
 		"pingDest":  "1.1.1.1",
+		"pingTimeout":  1000,
 		"pingBuffer":  1000,
 		"pingUpperBound":  200
 	},

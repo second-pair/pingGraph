@@ -54,7 +54,11 @@ use std ::io ::prelude;
 use std ::io ::Read;
 use std ::io ::Write;
 use std ::path ::Path;
+use std::str::FromStr;
+//  From Crates.io
+use json;
 use chrono;
+use ping_rs;
 
 //  Global Constants
 const PATH_PREFS: &str = "./settings.json";
@@ -69,6 +73,26 @@ const PATH_DATA_EXT: &str = ".csv";
 //  Local Variables
 
 //  Structures
+struct Settings <'a>
+{
+	pingDelay:  u64,		//  10000,
+	pingCount:  u64,		//  5,
+	pingDest:  &'a str,			//  1.1.1.1",
+	pingTimeout:  u64,		//  1000,
+	pingBuffer:  u64,		//  1000,
+	pingUpperBound:  u64,	//  200,
+	regexString:  &'a str,		//  time=([0-9]+\\.?[0-9]*) ?ms",
+	graphTitle:  &'a str,		//  Ping Results",
+	graphXLabel:  &'a str,		//  Pings",
+	graphYLabel:  &'a str,		//  Time (ms)",
+	colourBackground:  u32,	//  "#1E2028",
+	colourBox:  u32,		//  "#FFFFFF",
+	colourMajDivs:  u32,	//  "#FFFFFF",
+	colourPlotline:  u32,	//  "#19C4F1",
+	colourTitle:  u32,		//  "#46E415",
+	colourLabels:  u32,		//  "#FD9050",
+	colourNumbering:  u32,	//  "#8572F8",
+}
 
 //  *--</Preparations>--*  //
 
@@ -95,19 +119,34 @@ const PATH_DATA_EXT: &str = ".csv";
 
 //  *--<Main Code>--*  //
 
+# [allow (unreachable_code)]
 fn main ()
 {
+	//  PoC basic ping.
+	let theAddr = std ::net ::IpAddr ::from_str ("10.0.0.99") .unwrap ();
+	let theTime = std ::time ::Duration ::from_millis (1000);
+	let data = [8; 8];
+	let res = ping_rs ::send_ping (&theAddr, theTime, &data, None);
+	print! ("{:#?}\n", res);
+
+
 	//  Read & parse the settings JSON from disk.
-	let settingsJson = settingsRead (PATH_PREFS);
-	let pingDelay = settingsJson ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap ();
-	let pingCount = settingsJson ["pingSettings"] ["pingCount"] .as_u64 () .unwrap ();
-	let pingDest = settingsJson ["pingSettings"] ["pingDest"] .as_str () .unwrap ();
+	let settings = settingsRead (PATH_PREFS);
+	print! ("{}\n", settings .pingDelay + settings .pingCount);
+	std ::process ::exit (0);
+
+	/*let pingDest = match settingsJson ["pingSettings"] ["pingDest"] .as_str ()
+	{
+		Err (reason) => panic! ("Stuff"),
+		Ok (value) => value .unwrap (),
+	};*/
 
 	//  Create & open the output file.
 	let mut logFile = logOpen ();
 	//  Write the header regarding this test.
 	writeHeader (&mut logFile);
 
+	/*
 	//  Core Loop
 	//#  Capture ctrl+c.
 	//  Determine whether to run indefinitely, or how many pings to do if not.
@@ -125,6 +164,7 @@ fn main ()
 			handlePing (&mut logFile, pingDest, std ::time ::Duration ::from_millis (pingDelay));
 		}
 	}
+	*/
 
 	//  Wrap everything up.
 	//  No need to close the file - this will happen automatically once the handle goes out-of-scope.
@@ -139,7 +179,7 @@ fn handlePing (logFile: &mut File, pingDest: &str, sleepDur: std ::time ::Durati
 
 
 ///  Read the settings JSON from disk at the location specified.
-fn settingsRead (pathToOpen: &str) -> json ::JsonValue
+fn settingsRead (pathToOpen: &str) -> Settings
 {
 	//  Load the preferences JSON.
 	let settingsPath = Path ::new (pathToOpen);
@@ -159,8 +199,36 @@ fn settingsRead (pathToOpen: &str) -> json ::JsonValue
 		Err (reason) => panic! ("Failed to read {}:  {}", settingsPath .display (), reason),
 		Ok (_) => print! ("Read successful.\n"),
 	}
+
 	//  Parse & return the JSON.
-	return json ::parse (&settingsStr) .unwrap ();
+	let parsed = json ::parse (&settingsStr) .unwrap ();
+	let settings = Settings
+	{
+		pingDelay:  0,
+		pingCount:  0,
+		pingDest:  "0",
+		pingTimeout:  0,
+		pingBuffer:  0,
+		pingUpperBound:  0,
+		regexString:  "0",
+		graphTitle:  "0",
+		graphXLabel:  "0",
+		graphYLabel:  "0",
+		colourBackground:  0,
+		colourBox:  0,
+		colourMajDivs:  0,
+		colourPlotline:  0,
+		colourTitle:  0,
+		colourLabels:  0,
+		colourNumbering:  0,
+	};
+	/*{
+		parsed ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap ();
+		parsed ["pingSettings"] ["pingCount"] .as_u64 () .unwrap ();
+		parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap ();
+		parsed ["pingSettings"] ["pingTimeout"] .as_u64 () .unwrap ();
+	};*/
+	return settings;
 }
 
 ///  Open a new log file, which is automatically named using the current date.

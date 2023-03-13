@@ -1,5 +1,5 @@
 .*.swp
 .vscode
-target
+/target/
 orig
 data
