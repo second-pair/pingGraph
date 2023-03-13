@@ -56,6 +56,7 @@ use std ::io ::Write;
 use std ::path ::Path;
 use std ::str ::FromStr;
 use std ::borrow ::Cow;
+use std ::time ::Duration;
 //  From Crates.io
 use json;
 use chrono;
@@ -76,13 +77,13 @@ const PATH_DATA_EXT: &str = ".csv";
 //  Structures
 struct Settings
 {
-	pingDelay:  u64,		//  10000,
+	dateStart:  chrono ::DateTime <chrono ::Local>,
+	pingDelay:  Duration,		//  10000,
 	pingCount:  u64,		//  5,
-	pingDest:  String,		//  1.1.1.1",
-	pingTimeout:  u64,		//  1000,
+	pingDest:  std ::net ::IpAddr,		//  1.1.1.1",
+	pingTimeout:  Duration,		//  1000,
 	pingBuffer:  u64,		//  1000,
 	pingUpperBound:  u64,	//  200,
-	regexString:  String,	//  time=([0-9]+\\.?[0-9]*) ?ms",
 	graphTitle:  String,	//  Ping Results",
 	graphXLabel:  String,	//  Pings",
 	graphYLabel:  String,	//  Time (ms)",
@@ -123,27 +124,13 @@ struct Settings
 # [allow (unreachable_code)]
 fn main ()
 {
-	//  PoC basic ping.
-	let theAddr = std ::net ::IpAddr ::from_str ("10.0.0.99") .unwrap ();
-	let theTime = std ::time ::Duration ::from_millis (1000);
-	let data = [8; 8];
-	let res = ping_rs ::send_ping (&theAddr, theTime, &data, None);
-	print! ("{:#?}\n", res);
-
-
 	//  Read & parse the settings JSON from disk.
 	let settings = settingsRead (PATH_PREFS);
-
-	/*let pingDest = match settingsJson ["pingSettings"] ["pingDest"] .as_str ()
-	{
-		Err (reason) => panic! ("Stuff"),
-		Ok (value) => value .unwrap (),
-	};*/
 
 	//  Create & open the output file.
 	let mut logFile = logOpen ();
 	//  Write the header regarding this test.
-	writeHeader (&mut logFile);
+	writeHeader (&mut logFile, &settings);
 
 	//  Core Loop
 	//#  Capture ctrl+c.
@@ -152,14 +139,14 @@ fn main ()
 	{
 		loop
 		{
-			handlePing (&mut logFile, &settings .pingDest, std ::time ::Duration ::from_millis (settings .pingDelay));
+			handlePing (&mut logFile, &settings);
 		}
 	}
 	else
 	{
 		for _ in 0 .. settings .pingCount
 		{
-			handlePing (&mut logFile, &settings .pingDest, std ::time ::Duration ::from_millis (settings .pingDelay));
+			handlePing (&mut logFile, &settings);
 		}
 	}
 
@@ -168,10 +155,16 @@ fn main ()
 }
 
 ///  Handle a ping.
-fn handlePing (logFile: &mut File, pingDest: &str, sleepDur: std ::time ::Duration)
+fn handlePing (logFile: &mut File, settings: &Settings)
 {
-	writeResult (logFile, pingDest);
-	std ::thread ::sleep (sleepDur);
+	//  Perform the ping.
+	let data = [8; 8];
+	let res = ping_rs ::send_ping (&settings .pingDest, settings .pingTimeout, &data, None);
+
+	//  Handle the results.
+	writeResult (logFile, &res);
+	graphResult (settings, &res);
+	std ::thread ::sleep (settings .pingDelay);
 }
 
 
@@ -202,13 +195,13 @@ fn settingsRead (pathToOpen: &str) -> Settings
 	let testStr = parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap () .to_owned ();
 	let settings = Settings
 	{
-		pingDelay:  parsed ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap (),
+		dateStart:  chrono ::Local ::now (),
+		pingDelay:  Duration ::from_millis (parsed ["pingSettings"] ["pingDelay"] .as_u64 () .unwrap ()),
 		pingCount:  parsed ["pingSettings"] ["pingCount"] .as_u64 () .unwrap (),
-		pingDest:  parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap () .to_owned (),
-		pingTimeout:  parsed ["pingSettings"] ["pingTimeout"] .as_u64 () .unwrap (),
+		pingDest:  std ::net ::IpAddr ::from_str (parsed ["pingSettings"] ["pingDest"] .as_str () .unwrap ()) .unwrap (),
+		pingTimeout:  Duration ::from_millis (parsed ["pingSettings"] ["pingTimeout"] .as_u64 () .unwrap ()),
 		pingBuffer:  parsed ["pingSettings"] ["pingBuffer"] .as_u64 () .unwrap (),
 		pingUpperBound:  parsed ["pingSettings"] ["pingUpperBound"] .as_u64 () .unwrap (),
-		regexString:  parsed ["regexString"] .as_str () .unwrap () .to_owned (),
 		graphTitle:  parsed ["graphText"] ["graphTitle"] .as_str () .unwrap () .to_owned (),
 		graphXLabel:  parsed ["graphText"] ["graphXLabel"] .as_str () .unwrap () .to_owned (),
 		graphYLabel:  parsed ["graphText"] ["graphYLabel"] .as_str () .unwrap () .to_owned (),
@@ -251,20 +244,46 @@ fn logOpen () -> File  //  Return a file-buffer?
 }
 
 ///  Write the test header to the given file.
-fn writeHeader (logFile: &mut File)
+fn writeHeader (logFile: &mut File, settings: &Settings)
 {
 	logFile .write_all ("-=-  Ping Graph  -=-\n" .as_bytes ()) .unwrap ();
-	logFile .write_all ("-=>  Address:  127.0.0.1\n" .as_bytes ()) .unwrap ();
-	logFile .write_all ("-=>  Period:  10s\n\n" .as_bytes ()) .unwrap ();
+	logFile .write_all (format! ("-=>  Started:  {}\n", settings .dateStart .format ("%Y-%m-%d_%H-%M-%S")) .as_bytes ()) .unwrap ();
+	logFile .write_all (format! ("-=>  Address:  {}\n", settings .pingDest) .as_bytes ()) .unwrap ();
+	logFile .write_all (format! ("-=>  Period:  {}s\n", settings .pingDelay .as_secs ()) .as_bytes ()) .unwrap ();
+	logFile .write_all (format! ("-=>  Timeout:  {}ms\n\n", settings .pingTimeout .as_millis ()) .as_bytes ()) .unwrap ();
 }
 
 ///  Write a ping result to the given file.
-fn writeResult (logFile: &mut File, pingDest: &str)
+fn writeResult (logFile: &mut File, result: &Result <ping_rs ::PingReply, ping_rs ::PingError>)
 {
+	//  Generate the timestamp.
 	let dateString = chrono ::Local ::now () .format ("%Y-%m-%d_%H-%M-%S");
-	let logLine = format! ("[{}]:  {} - {}ms\n", dateString, pingDest, 489);
+
+	//  Format the results for printing.
+	let logLine: String;
+	match result
+	{
+		Err (error) => logLine = format! ("[{}]:  <F>  {:?}\n", dateString, error),
+		Ok (res) => logLine = format! ("[{}]:  <P>  {} - {}ms\n", dateString, res .address, res .rtt),
+	};
+
+	//  Write the results to the console and log file.
 	std ::io ::stdout () .write (logLine .as_bytes ()) .unwrap ();
 	logFile .write_all (logLine .as_bytes ()) .unwrap ();
+}
+
+///  Graph a ping result.
+fn graphResult (settings: &Settings, result: &Result <ping_rs ::PingReply, ping_rs ::PingError>)
+{
+	//  Get the total elapsed time since starting the pings.
+	let elapsed = (chrono ::Local ::now () - settings .dateStart) .num_milliseconds ();
+	//  Determine whether to plot a successful or failed ping.
+	/*match result
+	{
+		Err () => plot (0),
+		Ok () => plot (1),
+	}*/
+	return;
 }
 
 //  *--</Main Code>--*  //

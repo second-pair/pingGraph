@@ -1,15 +1,13 @@
 {
 	"pingSettings":
 	{
-		"pingDelay":  10000,
+		"pingDelay":  1000,
 		"pingCount":  5,
-		"pingDest":  "1.1.1.1",
-		"pingTimeout":  1000,
+		"pingDest":  "10.0.0.1",
+		"pingTimeout":  100,
 		"pingBuffer":  1000,
 		"pingUpperBound":  200
 	},
-
-	"regexString": "time=([0-9]+\\.?[0-9]*) ?ms",
 
 	"graphText":
 	{
